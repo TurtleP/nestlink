@@ -1,3 +1,20 @@
+--[[
+    NOTE:
+
+    This server code is heavily based on lovebird (https://github.com/rxi/lovebird)
+    Most (if not all) functionality and code does come from there. Credits to rxi.
+    Figuring out how it worked was honestly the most annoying part of it all.
+
+    It is supposed to be a stripped down version that runs purely on a command line interface.
+    The server-side Lua code will be put inside of LÖVE Potion and enabled when the console flag
+    in conf.lua is active. The nim client (exe/app/linux exec) will be ran on the desktop. The idea
+    is to not tax the console with running both client and server for this. Also coroutines don't work
+    too well on 3DS, I suppose, but either way this should work™ when I test it on hardware.
+
+    Hopefully I can make it less of lovebird's codebase and more of mine, as I do feel bad about re-using a
+    majority of it. Though if it can't be helped, so be it since there's only so many ways to do some stuff.
+--]]
+
 local socket = require("socket")
 io.stdout:setvbuf("no")
 
