@@ -20,10 +20,10 @@ io.stdout:setvbuf("no")
 
 local server = {}
 
-server.socket  = nil
+server.socket = nil
+server.client = nil
 
 server.history     = {}
-server.connections = {}
 
 server.hostname = {"*", 8000}
 server.maxLines = 200
@@ -87,17 +87,13 @@ function server.update()
         server.onConnect(client)
     end
 
-    for address, client in pairs(server.connections) do
-        local status = server.receive(client, "*l")
+    -- poll data on the client socket
+    if server.client then
+        local status = server.receive(server.client, "*l")
 
+        -- no status, kill it
         if not status then
-            server.origPrint("Client " .. address .. " disconnected!")
-            server.connections[address] = nil
-        end
-
-        if server.bufferChanged then
-            server.send(client, server.buffer[#server.buffer])
-            server.bufferChanged = false
+            server.onDisconnect(server.client)
         end
     end
 end
@@ -119,12 +115,20 @@ function server.trace(...)
 end
 
 function server.eval(str, params)
+    -- finds the parameters of a function
     params = params and ("," .. params) or ""
+
     local f = function(x)
+        -- calls the local echo function below
         return string.format(" echo(%q)", x)
     end
 
+    -- wraps whatever text from input str to be echoed
     str = ("?>"..str.."<?lua"):gsub("%?>(.-)<%?lua", f)
+
+    -- creates a lua code string to execute from data above
+    -- something like `local echo (, arg1, arg2, ...) = ... echo(str)
+    -- this allows loadstring to evaluate the data
     str = "local echo " .. params .. " = ..." .. str
 
     local func = assert(loadstring(str))
@@ -140,9 +144,11 @@ function server.eval(str, params)
     end
 end
 
-server.bufferChanged = false
+-- actual magical stuff -- format the lines
+-- based on their type and then re-map to the buffer table
+-- ideally we just want to push this to the client socket
+-- with whatever this line would be to not waste time
 function server.recalculateBuffer()
-    local forceChange = false
     local function parseLine(line)
         local str = line.str
 
@@ -152,7 +158,6 @@ function server.recalculateBuffer()
 
         if line.count > 1 then
             str = string.format("(%d) ", line.count) .. str
-            forceChange = true
         end
 
         if server.timeStamp then
@@ -164,15 +169,13 @@ function server.recalculateBuffer()
         return str
     end
 
-    local newBuffer = server.map(server.history, parseLine)
-
-    if #server.buffer ~= #newBuffer or forceChange then
-        server.buffer = newBuffer
-        server.bufferChanged = true
-        return
-    end
+    server.buffer = server.map(server.history, parseLine)
+    server.send(server.client, server.buffer[#server.buffer])
 end
 
+-- called whenever server.print is called
+-- pushes a line of type to the history
+-- recalculates the buffer afterwards
 function server.pushline(line)
     line.time = os.time()
     line.count = 1
@@ -184,51 +187,9 @@ function server.pushline(line)
     server.recalculateBuffer()
 end
 
-function server.receive(client, pattern)
-    while true do
-        local data, message = client:receive(pattern)
-
-        if not data then
-            if message ~= "timeout" then
-                return false
-            end
-            return true
-        else
-            if data == "globals" then
-                for name, value in pairs(_G) do
-                    server.send(client, "global;" .. name .. ";" .. tostring(value))
-                end
-            else
-                server.send(client, server.eval(data))
-            end
-            return true
-        end
-    end
-
-    client:close()
-end
-
-function server.onConnect(client)
-    local address = client:getsockname()
-    client:settimeout(0)
-
-    server.origPrint("Client Connected: " .. address)
-    if not server.connections[address] then
-        server.connections[address] = client
-    end
-end
-
-function server.onError(error)
-    server.pushline({ type = "error", str = error })
-    if server.wrapPrint then
-        server.origPrint("[lovenest] ERROR: " .. error)
-    end
-end
-
-function server.accept()
-    return server.socket:accept()
-end
-
+-- send data to a client
+-- eval is a string or function to call
+-- if it's a function, xpcall it and send the newest buffer data
 function server.send(client, eval)
     local res = eval
 
@@ -242,10 +203,77 @@ function server.send(client, eval)
         xpcall(function()
             assert(loadstring(str, "input"))()
         end, server.onError)
-
-        return client:send(server.buffer[#server.buffer] .. "\n")
+        return
     end
+
     client:send(tostring(res) .. "\n")
+end
+
+-- receive data from a client
+-- as long as we aren't finding it's closed
+-- we just keep checking for data and return true
+function server.receive(client, pattern)
+    while true do
+        local data, message = client:receive(pattern)
+
+        -- If no data found, only return false
+        -- when the message isn't "timeout" (aka "closed")
+        if not data then
+            if message ~= "timeout" then
+                return false
+            end
+            return true
+        else
+            -- Whatever we got from data, parse the command
+            -- case: globals -> send all global variables
+            -- case: anything else -> parse Lua
+            if data == "globals" then
+                for name, value in pairs(_G) do
+                    server.send(client, "global;" .. name .. ";" .. tostring(value))
+                end
+            else
+                server.send(client, server.eval(data))
+            end
+            return true
+        end
+    end
+end
+
+-- when a client connects, add it to our
+-- connections listings
+function server.onConnect(client)
+    local address = client:getsockname()
+    client:settimeout(0)
+
+    server.origPrint("Client Connected: " .. address)
+    if not server.client then
+        server.client = client
+    end
+end
+
+function server.onDisconnect(client)
+    local address = client:getsockname()
+    server.origPrint("Client Disconnected: " .. address)
+
+    if server.client then
+        server.client:close()
+    end
+    server.client = nil
+end
+
+-- when there's an error in the lua parsing
+-- this will push an error line to the buffer
+function server.onError(error)
+    server.pushline({ type = "error", str = error })
+    if server.wrapPrint then
+        server.origPrint("[lovenest] ERROR: " .. error)
+    end
+end
+
+-- shorthand accept method
+-- returns the client object (or nil)
+function server.accept()
+    return server.socket:accept()
 end
 
 function server.settimeout(time)

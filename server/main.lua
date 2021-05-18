@@ -1,4 +1,4 @@
-local server = require("server")
+local server = require("console")
 
 server.init({wrapPrint = true})
 
