@@ -20,6 +20,8 @@ io.stdout:setvbuf("no")
 
 local server = {}
 
+server.init = false
+
 server.socket = nil
 server.client = nil
 
@@ -54,7 +56,7 @@ function server.print(...)
     end
 end
 
-function server.init(flags)
+function server.load(flags)
     server.socket = assert(socket.bind(unpack(server.hostname)))
     server.settimeout(0)
 
@@ -74,9 +76,14 @@ function server.init(flags)
     end
 
     server.origPrint("STARTING LOVENEST")
+    server.init = true
 end
 
 function server.update()
+    if not server.init then
+        server.load()
+    end
+
     while true do
         local client = server.accept()
 

@@ -26,7 +26,7 @@ proc threadFunc(arg: tuple[socket : Socket, message : var Message]) {.thread.} =
             break
 
         let data = arg.socket.recvLine()
-        echo data
+
         if not data.isEmptyOrWhitespace():
             if "global" in data:
                 let split = data.split(";")

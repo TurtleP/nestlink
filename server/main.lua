@@ -1,6 +1,6 @@
 local server = require("console")
 
-server.init({wrapPrint = true})
+server.load({wrapPrint = true})
 
 function love.update(dt)
     server.update()
