@@ -1,11 +1,5 @@
-local server = require("console")
-
-server.load({wrapPrint = true})
+local server = require("server")
 
 function love.update(dt)
-    server.update()
-end
-
-function love.keypressed(key)
-    print(key .. " was pressed!")
+    server:update()
 end
