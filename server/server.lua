@@ -4,7 +4,7 @@
 
 local server = {}
 
-assert = require("assert")
+assert = require("batteries.assert")
 local socket = require("socket")
 
 server.inited = false
@@ -20,7 +20,7 @@ server.allowedAddresses = { "127.0.0.1" }
 local __NULL__FUNC__ = function() end
 
 function server:log(format, ...)
-    local dateTime = os.date("%Y-%m-%d/%H:%M:%S")
+    local dateTime = os.date("%m/%d/%Y %H:%M:%S")
     print("[" .. dateTime .. "] " .. string.format(format, ...))
 end
 
@@ -35,8 +35,8 @@ function server:init()
 
     self.socket:settimeout(0)
 
-    local ip, port = self.socket:getsockname()
-    self:log("Server Initialized @ %s:%d", ip, port)
+    local _, port = self.socket:getsockname()
+    self:log("Server Initialized on Port %d", port)
 
     self.inited = true
 end
@@ -44,23 +44,27 @@ end
 --[[
 - @brief Configure the server settings.
 - @param `port` -> Port `number` to listen on.
-- @param `...` Variadic list of IP addresses (or `nil`) for `server.allowedAddresses`
+- @param `...` Variadic list of IP addresses (or `nil`) for `server.allowedAddresses`.
 --]]
-function server:config(port, ...)
-    self.port = assert:type(port, "number")
-
-    if type(...) ~= "nil" then
-        self.allowedAddresses = assert:type(..., "table")
-        return
+function server:config(config)
+    if config.port then
+        self.port = assert:type(config.port, "number")
     end
-    self.allowedAddresses = ...
+
+    if config.addresses then
+        if type(config.addresses) ~= "nil" then
+            self.allowedAddresses = assert:type(config.addresses, "table")
+            return
+        end
+        self.allowedAddresses = nil
+    end
 end
 
 --[[
 - @brief Handle receiving of data per line.
 - @param client -> Client object that was accepted in `client:update()`.
-- @note If there's no data and the client timed out, we want to wait for more data.
-- @note If there's no data and we get any other message, close the client connection
+- @note If there's no data and the Client timed out, we want to wait for more data.
+- @note If there's no data and we get any other message, close the Client connection
 - @note If there's data, we want to return it to the main server to log that we got it
 --]]
 function server:receive(client)
