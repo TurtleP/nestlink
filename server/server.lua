@@ -15,7 +15,7 @@ server.magic_str = "nestlink"
 server.host = "*"
 server.port = 8000
 
-server.allowed = { "127.0.0.1" }
+server.allowedAddresses = { "127.0.0.1" }
 
 local __NULL__FUNC__ = function() end
 
@@ -25,20 +25,43 @@ function server:log(format, ...)
 end
 
 --[[
--- Initialize the server
+- @brief Initialize the server protocol.
 --]]
 function server:init()
+    assert:equal(self.inited, false)
+
     self.socket = socket.bind(self.host, self.port)
     assert:some(self.socket, "socket failed to be created")
 
     self.socket:settimeout(0)
-    self.inited = true
 
-    self:log("Server Initialized")
+    local ip, port = self.socket:getsockname()
+    self:log("Server Initialized @ %s:%d", ip, port)
+
+    self.inited = true
 end
 
 --[[
--- Handle receiving of data per line
+- @brief Configure the server settings.
+- @param `port` -> Port `number` to listen on.
+- @param `...` Variadic list of IP addresses (or `nil`) for `server.allowedAddresses`
+--]]
+function server:config(port, ...)
+    self.port = assert:type(port, "number")
+
+    if type(...) ~= "nil" then
+        self.allowedAddresses = assert:type(..., "table")
+        return
+    end
+    self.allowedAddresses = ...
+end
+
+--[[
+- @brief Handle receiving of data per line.
+- @param client -> Client object that was accepted in `client:update()`.
+- @note If there's no data and the client timed out, we want to wait for more data.
+- @note If there's no data and we get any other message, close the client connection
+- @note If there's data, we want to return it to the main server to log that we got it
 --]]
 function server:receive(client)
     while true do
@@ -57,8 +80,10 @@ function server:receive(client)
 end
 
 --[[
--- The server expects already-parsed Lua data
--- So we're just gonna print whatever we get
+- @brief Handle when we get a Client to connect.
+- @param client -> Client object from `server:update()`
+- @note This function also handls receiving data from the Client.
+- @note The server expects already-parsed Lua data from the Client's end.
 --]]
 function server:onConnect(client)
     local ip, _ = client:getsockname()
@@ -71,14 +96,37 @@ function server:onConnect(client)
             break
         end
 
-        print(line)
+        self:log(line)
     end
 
     client:close()
 end
 
 --[[
--- Update the server
+- @brief Check if an IP address is allowed to connect.
+- @param address -> Address to check.
+- @note `server.allowedAddresses` handles this, so add IP addresses that you trust.
+- @note However, setting the table to either nil or "*" can allow any connection.
+--]]
+function server:checkAddressAllowed(address)
+    if self.allowedAddresses == nil then
+        return true
+    end
+
+    for _, addr in pairs(self.allowedAddresses) do
+        local pattern = "^" .. addr:gsub("%.", "%%."):gsub("%*", "%%d*") .. "$"
+        if address:match(pattern) then
+            return true
+        end
+    end
+    return false
+end
+
+--[[
+- @brief Update the server protocol.
+- @note Waits and accepts clients to be useable for data reception.
+- @note Once a Client is accepted, it is checked against `server.allowedAddresses`.
+- @note It is then kept alive until the server has been told that the Client disconnects.
 --]]
 function server:update()
     if not self.inited then
@@ -96,12 +144,17 @@ function server:update()
 
         local ip, port = client:getsockname()
 
-        local connection = coroutine.wrap(function()
-            xpcall(self:onConnect(client), __NULL__FUNC__)
-        end)
+        if self:checkAddressAllowed(ip) then
+            local connection = coroutine.wrap(function()
+                xpcall(self:onConnect(client), __NULL__FUNC__)
+            end)
 
-        self.clients[connection] = { ip = ip, port = port }
-        self:log("Client Connection: %s:%d", ip, port)
+            self.clients[connection] = { ip = ip, port = port }
+            self:log("Client Connection: %s:%d", ip, port)
+        else
+            self:log("Got non-allowed connection from %s:%d", ip, port)
+            client:close()
+        end
     end
 
     for connection, _ in pairs(self.clients) do
