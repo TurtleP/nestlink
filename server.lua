@@ -46,16 +46,18 @@ end
 - @param `config` -> table of { port = `number`, addresses = { `address1`, `address2`, `...` } }
 --]]
 function server:config(config)
-    if config.port then
-        self.port = assert:type(config.port, "number")
-    end
-
-    if config.addresses then
-        if type(config.addresses) ~= "nil" then
-            self.allowedAddresses = assert:type(config.addresses, "table")
-            return
+    if config then
+        if config.port then
+            self.port = assert:type(config.port, "number")
         end
-        self.allowedAddresses = nil
+
+        if config.addresses then
+            if type(config.addresses) ~= "nil" then
+                self.allowedAddresses = assert:type(config.addresses, "table")
+                return
+            end
+            self.allowedAddresses = nil
+        end
     end
 end
 
@@ -173,6 +175,7 @@ function server:update()
 end
 
 function server:close()
+    self.socket:shutdown()
     self.socket:close()
 end
 

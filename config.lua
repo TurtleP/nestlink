@@ -51,11 +51,12 @@ end
 
 --[[
 - @brief Get the data we need to run the server
-- @return port -> number
-- @return addresses -> table of IP addresses
+- @return `data` -> table of:
+-  `port` -> number
+-  `addresses` -> table of strings (IP addresses)
 --]]
 function config:getData()
-    return self.port, self.addresses
+    return {port = self.port, addresses = self.addresses}
 end
 
 return config
