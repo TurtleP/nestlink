@@ -1,16 +1,17 @@
 --[[
--- This is the server file that the client connects to
+- @file server.lua
+- @brief This is the server file that the client connects to
 --]]
 
 local server = {}
 
+local json = require("json")
 assert = require("batteries.assert")
 local socket = require("socket")
 
 server.inited = false
 
 server.clients = {}
-server.magic_str = "nestlink"
 
 server.host = "*"
 server.port = 8000
@@ -36,7 +37,7 @@ function server:init()
     self.socket:settimeout(0)
 
     local _, port = self.socket:getsockname()
-    self:log("Server Initialized on Port %d", port)
+    self:log("Server initialized on port %d", port)
 
     self.inited = true
 end
@@ -99,7 +100,8 @@ function server:onConnect(client)
             break
         end
 
-        self:log(line)
+        local dataLog = line:gsub("%[?%]?", "")
+        self:log(dataLog:gsub(",", ", "))
     end
 
     client:close()
@@ -107,21 +109,22 @@ end
 
 --[[
 - @brief Check if an IP address is allowed to connect.
-- @param address -> Address to check.
+- @param `hostname` -> Address to check.
 - @note `server.allowedAddresses` handles this, so add IP addresses that you trust.
 - @note However, setting the table to either nil or "*" can allow any connection.
 --]]
-function server:checkAddressAllowed(address)
+function server:checkAddressAllowed(hostname)
     if self.allowedAddresses == nil then
         return true
     end
 
-    for _, addr in pairs(self.allowedAddresses) do
-        local pattern = "^" .. addr:gsub("%.", "%%."):gsub("%*", "%%d*") .. "$"
-        if address:match(pattern) then
+    for _, address in ipairs(self.allowedAddresses) do
+        local pattern = "^" .. address:gsub("%.", "%%."):gsub("%*", "%%d*") .. "$"
+        if hostname:match(pattern) then
             return true
         end
     end
+
     return false
 end
 
@@ -145,7 +148,7 @@ function server:update()
 
         client:settimeout(0)
 
-        local ip, port = client:getsockname()
+        local ip, port = client:getpeername()
 
         if self:checkAddressAllowed(ip) then
             local connection = coroutine.wrap(function()

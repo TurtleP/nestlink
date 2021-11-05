@@ -21,21 +21,18 @@ function love.load(arg)
         return love.event.quit()
     end
 
-    for index = 1, #commandline do
-        local v = commandline[index]
-        for argindex = 1, #arg do
-            if v == "port" then
-                serverConfig.port = arg[argindex]
-            elseif v == "addresses" then
-                local addresses = stringx.split(arg[argindex], ",")
-                serverConfig.addresses = addresses
-            end
-        end
+    if #arg == 1 then
+        serverConfig.port = tonumber(arg[1])
+    end
+
+    if #arg == 2 then
+        local addresses = stringx.split(arg[2], ",")
+        serverConfig.addresses = addresses
     end
 
     server:config(serverConfig)
 end
 
-function love.update(dt)
+function love.update()
     server:update()
 end
