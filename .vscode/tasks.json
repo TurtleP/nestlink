@@ -1,17 +1,23 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Build Client",
-            "type": "shell",
-            "command": "nim --threads:on -o:${workspaceFolder}/dist/nestlink c client/main.nim",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        }
-    ]
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Server (Win/macOS)",
+      "type": "shell",
+      "command": "makelove --config server/makelove.toml",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build Server (Linux)",
+      "type": "shell",
+      "command": "makelove --config server/makelove.toml 'appimage'",
+      "group": "build"
+    }
+  ]
 }

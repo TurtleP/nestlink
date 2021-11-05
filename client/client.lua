@@ -1,3 +1,6 @@
+R"luastring"--(
+-- DO NOT REMOVE THE ABOVE LINE. It is used to load this file as a C++ string.
+-- There is a matching delimiter at the bottom of the file.
 --------------
 --
 -- json.lua
@@ -130,12 +133,13 @@ end
 - @brief Client for nestlink
 --]]
 
-local client = {}
+local love = require("love")
+love.console = {}
 
 -- max amount of retries
 local MAX_RETRIES = 3
-client.retries = 0
-client.connected = false
+love.console.retries = 0
+love.console.connected = false
 
 -- max time until timeout
 local MAX_TIMEOUT = 3
@@ -149,9 +153,16 @@ local _print = print
 - @param `format` -> Message format, see https://www.lua.org/pil/20.2.html.
 - @param `...` -> Variadic args for `format`.
 --]]
-function client:log(format, ...)
+local function log(format, ...)
     local dateTime = os.date("%Y-%m-%d/%H:%M:%S")
-    _print("[" .. dateTime .. "] " .. string.format(format, ...))
+
+    local logFormat = "[%s] %s"
+    local logString = string.format(logFormat, dateTime, string.format(format, ...))
+    _print(logString)
+
+    if love.console.logfile then
+        love.console.logfile:write(logString .. "\n")
+    end
 end
 
 --[[
@@ -165,21 +176,21 @@ function print(...)
     if type(arg) == "function" then
         results = { pcall(arg) }
         if not table.remove(results, 1) then
-            client:log("Function call failed.")
+            log("Function call failed.")
         end
     elseif length > 1 then
         results = table.concat({...}, ", ")
-        return client:send(results)
+        return love.console:send(results)
     elseif type(arg) == "nil" then
         results = json.encode(nil)
-        return client:send(results)
+        return love.console:send(results)
     elseif type(arg) == "table" then
         results = arg
     else
         results = { ... }
     end
 
-    client:send(json.encode(results))
+    love.console:send(json.encode(results))
 end
 
 --[[
@@ -188,7 +199,7 @@ end
 - @param `port` -> The port number from the `love.conf` console field.
 - @return `success` -> boolean.
 --]]
-function client:tryConnection(host, port)
+function love.console:tryConnection(host, port)
     local success = self.socket:connect(host, port)
 
     return success
@@ -199,35 +210,40 @@ end
 - @param `host` -> The IP address from the `love.conf` console field.
 - @param `port` -> The port number from the `love.conf` console field.
 --]]
-function client:init(host, port)
+function love.console:init(host, _port)
     self.socket = socket.tcp()
-    assert(self.socket ~= nil)
+    assert(self.socket, "failed to create socket")
+
+    if love.filesystem then
+        self.logfile = love.filesystem.newFile("nestlink.log", "w")
+    end
 
     self.socket:settimeout(MAX_TIMEOUT)
 
+    local port = _port or 8000
     while self.retries < MAX_RETRIES do
         local success = self:tryConnection(host, port)
 
         if not success then
             self.retries = self.retries + 1
-            self:log("Connection to Remote timed out, retrying: %d/%d", self.retries, MAX_RETRIES)
+            log("Connection to Remote timed out, retrying: %d/%d", self.retries, MAX_RETRIES)
         else
-            client.connected = true
+            love.console.connected = true
             break
         end
     end
 
-    if self.retries == MAX_RETRIES and not client.connected then
-        return self:log("Failed to connect to Remote %s:%d", host, port)
+    if self.retries == MAX_RETRIES and not love.console.connected then
+        return log("Failed to connect to Remote %s:%d", host, port)
     end
-    self:log("Successfully connected to Remote %s:%d", host, port)
+    log("Successfully connected to Remote %s:%d", host, port)
 end
 
 --[[
 - @brief Send a string of data to the server.
 - @param `data` -> Datagram message to send.
 --]]
-function client:send(data)
+function love.console:send(data)
     if not self.connected then
         return
     end
@@ -235,9 +251,10 @@ function client:send(data)
     local success, message = self.socket:send(data .. "\n")
 
     if not success then
-        return self:log("Failed to send '%s' to server: %s", data, message)
+        return log("Failed to send '%s' to server: %s", data, message)
     end
-    self:log("Sending '%s' to server", data)
+    log("Sending '%s' to server", data)
 end
 
-return client
+-- DO NOT REMOVE THE NEXT LINE. It is used to load this file as a C++ string.
+--)luastring"--"

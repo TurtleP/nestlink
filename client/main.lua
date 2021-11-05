@@ -1,5 +1,5 @@
-local client = require("client")
-client:init("127.0.0.1", 25545)
+require("client")
+love.console:init("127.0.0.1", 25545)
 
 function love.load()
     print("Hello World!")
