@@ -5,7 +5,6 @@
 
 local server = {}
 
-local json = require("json")
 assert = require("batteries.assert")
 local socket = require("socket")
 

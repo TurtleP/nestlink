@@ -1,0 +1,16 @@
+nestlink server %s
+
+nestlink [port]
+
+Options
+  port        - port to listen on
+  addresses   - addresses to allow, separated by commas
+  init_config - creates a new config file
+
+If options are omitted, they use the following defaults:
+  port:8000
+  addresses:127.0.0.1
+
+A configuration file can also be used to override defaults.
+Using init_config, you can find and edit this file under:
+%s
