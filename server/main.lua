@@ -1,25 +1,34 @@
 local server = require("server")
 local stringx = require("batteries.stringx")
 
-local commands = {}
-commands.port      = { long = "--port",      short = "-p", seen = false }
-commands.addresses = { long = "--addresses", short = "-a", seen = false }
+local commandline = { "port", "addresses" }
 
+local version = "0.1.0"
+local help_message = [[
+nestlink server %s
+
+nestlink [port] [addresses]
+
+Options
+  port      - port to listen on
+  addresses - addresses to allow, separated by commas
+]]
 function love.load(arg)
     local serverConfig = {}
 
-    for key, value in pairs(commands) do
-        for index = 1, #arg do
-            local v = stringx.split(arg[index], "=")
-            if key == "port" then
-                if value.long == v[1] or value.short == v[1] then
-                    serverConfig.port = tonumber(v[2])
-                end
-            elseif key == "addresses" then
-                if value.long == v[1] or value.short == v[1] then
-                    local addresses = stringx.split(v[2], ",")
-                    serverConfig.addresses = addresses
-                end
+    if arg[1] == "help" then
+        print(help_message:format(version))
+        return love.event.quit()
+    end
+
+    for index = 1, #commandline do
+        local v = commandline[index]
+        for argindex = 1, #arg do
+            if v == "port" then
+                serverConfig.port = arg[argindex]
+            elseif v == "addresses" then
+                local addresses = stringx.split(arg[argindex], ",")
+                serverConfig.addresses = addresses
             end
         end
     end
