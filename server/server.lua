@@ -43,8 +43,7 @@ end
 
 --[[
 - @brief Configure the server settings.
-- @param `port` -> Port `number` to listen on.
-- @param `...` Variadic list of IP addresses (or `nil`) for `server.allowedAddresses`.
+- @param `config` -> table of { port = `number`, addresses = { `address1`, `address2`, `...` } }
 --]]
 function server:config(config)
     if config.port then
