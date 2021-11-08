@@ -1,5 +1,5 @@
 --[[
-- @file server.lua
+- @module server
 - @brief This is the server file that the client connects to
 --]]
 
@@ -19,6 +19,11 @@ server.allowedAddresses = { "127.0.0.1" }
 
 local __NULL__FUNC__ = function() end
 
+--[[
+- @brief Log a message with the current date and time to the console.
+- @param string Formatable text
+- @param vaargs Arguments to format the log with
+--]]
 function server:log(format, ...)
     local dateTime = os.date("%m/%d/%Y %H:%M:%S")
     print("[" .. dateTime .. "] " .. string.format(format, ...))
@@ -43,7 +48,7 @@ end
 
 --[[
 - @brief Configure the server settings.
-- @param `config` -> table of { port = `number`, addresses = { `address1`, `address2`, `...` } }
+- @param table Structured as { port = number, addresses = { string, string, ... } }
 --]]
 function server:config(config)
     if config then
@@ -63,7 +68,7 @@ end
 
 --[[
 - @brief Handle receiving of data per line.
-- @param client -> Client object that was accepted in `client:update()`.
+- @param tcp{connected} Client object that was accepted in `client:update()`.
 - @note If there's no data and the Client timed out, we want to wait for more data.
 - @note If there's no data and we get any other message, close the Client connection
 - @note If there's data, we want to return it to the main server to log that we got it
@@ -86,7 +91,7 @@ end
 
 --[[
 - @brief Handle when we get a Client to connect.
-- @param client -> Client object from `server:update()`
+- @param tcp{connected} Client object from `server:update()`
 - @note This function also handls receiving data from the Client.
 - @note The server expects already-parsed Lua data from the Client's end.
 --]]
@@ -110,7 +115,7 @@ end
 
 --[[
 - @brief Check if an IP address is allowed to connect.
-- @param `hostname` -> Address to check.
+- @param string IP address to check.
 - @note `server.allowedAddresses` handles this, so add IP addresses that you trust.
 - @note However, setting the table to either nil or "*" can allow any connection.
 --]]
@@ -174,6 +179,10 @@ function server:update()
     end
 end
 
+--[[
+- @brief Close the server down.
+- @note Calls `socket:shutdown()` and then `socket:close()`.
+--]]
 function server:close()
     self.socket:shutdown()
     self.socket:close()

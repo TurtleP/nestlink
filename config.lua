@@ -20,7 +20,7 @@ end
 
 --[[
 - @brief Check if the config file exists
-- @return `exists` -> boolean
+- @return boolean
 ]]
 function config:exists()
     return love.filesystem.getInfo("config.txt")
@@ -28,7 +28,7 @@ end
 
 --[[
 - @brief Parse the command line args *or* the config file
-- @param `args` the command line args from `love.load`
+- @param `args` The command line args from `love.load`
 --]]
 function config:parse(args)
     if not args then
@@ -51,9 +51,7 @@ end
 
 --[[
 - @brief Get the data we need to run the server
-- @return `data` -> table of:
--  `port` -> number
--  `addresses` -> table of strings (IP addresses)
+- @return table { port = number, addresses = { string, string, ... } }
 --]]
 function config:getData()
     return {port = self.port, addresses = self.addresses}
