@@ -1,5 +1,5 @@
 --[[
-- @file config.lua
+- @module config
 - @brief Handles the configuration setup for nestlink.
 --]]
 
