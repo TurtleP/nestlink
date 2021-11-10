@@ -1,6 +1,6 @@
 --[[
 - @file config.lua
-- @brief Handles the configuration setup for nestlink
+- @brief Handles the configuration setup for nestlink.
 --]]
 
 local config = {}
@@ -9,7 +9,7 @@ config.filepath = "data/config.txt"
 local stringx = require("batteries.stringx")
 
 --[[
-- @brief Initialize a new configuration file
+- @brief Initialize a new configuration file.
 --]]
 function config:init()
     if not self:exists() then
@@ -19,16 +19,16 @@ function config:init()
 end
 
 --[[
-- @brief Check if the config file exists
-- @return boolean
+- @brief Check if the config file exists.
+- @return `boolean`
 ]]
 function config:exists()
     return love.filesystem.getInfo("config.txt")
 end
 
 --[[
-- @brief Parse the command line args *or* the config file
-- @param `args` The command line args from `love.load`
+- @brief Parse the command line args *or* the config file.
+- @param `args` The command line args from `love.load`.
 --]]
 function config:parse(args)
     if not args then
@@ -50,8 +50,8 @@ function config:parse(args)
 end
 
 --[[
-- @brief Get the data we need to run the server
-- @return table { port = number, addresses = { string, string, ... } }
+- @brief Get the data we need to run the server.
+- @return `table` { port = `number`, addresses = { `string`, `string`, ... } }
 --]]
 function config:getData()
     return {port = self.port, addresses = self.addresses}

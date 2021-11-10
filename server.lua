@@ -21,8 +21,8 @@ local __NULL__FUNC__ = function() end
 
 --[[
 - @brief Log a message with the current date and time to the console.
-- @param string Formatable text
-- @param vaargs Arguments to format the log with
+- @param `string` Formatable text
+- @param `...` Arguments to format the log with
 --]]
 function server:log(format, ...)
     local dateTime = os.date("%m/%d/%Y %H:%M:%S")
@@ -48,7 +48,7 @@ end
 
 --[[
 - @brief Configure the server settings.
-- @param table Structured as { port = number, addresses = { string, string, ... } }
+- @param `table` Structured as { port = `number`, addresses = { `string`, `string`, `...` } }
 --]]
 function server:config(config)
     if config then
@@ -68,10 +68,10 @@ end
 
 --[[
 - @brief Handle receiving of data per line.
-- @param tcp{connected} Client object that was accepted in `client:update()`.
+- @param `tcp{connected}` Client object that was accepted in `client:update()`.
 - @note If there's no data and the Client timed out, we want to wait for more data.
-- @note If there's no data and we get any other message, close the Client connection
-- @note If there's data, we want to return it to the main server to log that we got it
+- @note If there's no data and we get any other message, close the Client connection.
+- @note If there's data, we want to return it to the main server to log that we got it.
 --]]
 function server:receive(client)
     while true do
@@ -91,7 +91,7 @@ end
 
 --[[
 - @brief Handle when we get a Client to connect.
-- @param tcp{connected} Client object from `server:update()`
+- @param `tcp{connected}` Client object from `server:update()`
 - @note This function also handls receiving data from the Client.
 - @note The server expects already-parsed Lua data from the Client's end.
 --]]
@@ -115,9 +115,9 @@ end
 
 --[[
 - @brief Check if an IP address is allowed to connect.
-- @param string IP address to check.
+- @param `string` IP address to check.
 - @note `server.allowedAddresses` handles this, so add IP addresses that you trust.
-- @note However, setting the table to either nil or "*" can allow any connection.
+- @note However, setting the table to either `nil` or "*" can allow any connection.
 --]]
 function server:checkAddressAllowed(hostname)
     if self.allowedAddresses == nil then
