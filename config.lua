@@ -20,7 +20,7 @@ end
 
 --[[
 - @brief Check if the config file exists.
-- @return `boolean`
+- @return `boolean`.
 ]]
 function config:exists()
     return love.filesystem.getInfo("config.txt")
@@ -51,7 +51,7 @@ end
 
 --[[
 - @brief Get the data we need to run the server.
-- @return `table` Configuration as { port = `number`, addresses = { `string`, `string`, ... } }
+- @return `table` Configuration as { port = `number`, addresses = { `string`, `string`, ... } }.
 --]]
 function config:getData()
     return {port = self.port, addresses = self.addresses}
