@@ -28,7 +28,7 @@ end
 
 --[[
 - @brief Parse the command line args *or* the config file.
-- @param `args` The command line args from `love.load`.
+- @param `table` The command line args from `love.load`.
 --]]
 function config:parse(args)
     if not args then
@@ -51,7 +51,7 @@ end
 
 --[[
 - @brief Get the data we need to run the server.
-- @return `table` { port = `number`, addresses = { `string`, `string`, ... } }
+- @return `table` Configuration as { port = `number`, addresses = { `string`, `string`, ... } }
 --]]
 function config:getData()
     return {port = self.port, addresses = self.addresses}
