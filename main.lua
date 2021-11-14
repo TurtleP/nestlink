@@ -1,7 +1,7 @@
 local server = require("server")
 local config = require("config")
 
-local version = "0.1.0"
+local version = "0.2.0"
 
 local function showHelp()
     local message = love.filesystem.read("data/help.txt")

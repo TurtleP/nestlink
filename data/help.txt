@@ -1,12 +1,17 @@
 
 nestlink server %s
 
-nestlink [port]
+nestlink [port | [addresses]]
 
 Options
   port        - port to listen on
   addresses   - addresses to allow, separated by commas
   init_config - creates a new config file
+
+Examples
+nestlink 25545
+nestlink 192.168.1.20
+nestlink 25545 192.168.1.20
 
 If options are omitted, they use the following defaults:
   port:8000

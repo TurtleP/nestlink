@@ -57,7 +57,7 @@ function server:config(config)
         end
 
         if config.addresses then
-            if type(config.addresses) ~= "nil" then
+            if type(config.addresses) ~= "nil" and config.addresses ~= "*" then
                 self.allowedAddresses = assert:type(config.addresses, "table")
                 return
             end
@@ -184,6 +184,10 @@ end
 - @note Calls `socket:shutdown()` and then `socket:close()`.
 --]]
 function server:close()
+    if not self.socket then
+        return
+    end
+
     self.socket:shutdown()
     self.socket:close()
 end
