@@ -6,6 +6,8 @@
 local server = {}
 
 assert = require("batteries.assert")
+local stringx = require("batteries.stringx")
+
 local socket = require("socket")
 
 server.inited = false
@@ -106,8 +108,11 @@ function server:onConnect(client)
             break
         end
 
-        local dataLog = line:gsub("%[?%]?", "")
-        self:log(dataLog:gsub(",", ", "))
+        local data_lines = stringx.split(line, "/")
+        local values = {love.data.unpack(data_lines[1], data_lines[2])}
+        table.remove(values, #values)
+
+        self:log(table.concat(values, ", "))
     end
 
     client:close()
