@@ -108,7 +108,7 @@ function server:onConnect(client)
             break
         end
 
-        local data_lines = stringx.split(line, "/")
+        local data_lines = stringx.split(line, "/", 1)
         local values = {love.data.unpack(data_lines[1], data_lines[2])}
         table.remove(values, #values)
 
