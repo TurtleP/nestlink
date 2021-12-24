@@ -5,8 +5,8 @@
 
 local server = {}
 
-assert = require("batteries.assert")
-local stringx = require("batteries.stringx")
+assert = require("libraries.batteries.assert")
+local stringx = require("libraries.batteries.stringx")
 
 local socket = require("socket")
 

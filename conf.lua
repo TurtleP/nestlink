@@ -1,13 +1,13 @@
 function love.conf(t)
     t.modules.audio = false
-    t.modules.data = false
+    t.modules.data = true
     t.modules.event = true
-    t.modules.font = false
-    t.modules.graphics = false
-    t.modules.image = false
+    t.modules.font = true
+    t.modules.graphics = true
+    t.modules.image = true
     t.modules.joystick = false
     t.modules.keyboard = false
-    t.modules.math = false
+    t.modules.math = true
     t.modules.mouse = false
     t.modules.physics = false
     t.modules.sound = false
@@ -16,8 +16,12 @@ function love.conf(t)
     t.modules.timer = true
     t.modules.touch = false
     t.modules.video = false
-    t.modules.window = false
+    t.modules.window = true
 
     t.console = true
     t.identity = "nestlink"
+
+    t.window.width = 480
+    t.window.height = 340
+    t.window.title = "nëstlink"
 end

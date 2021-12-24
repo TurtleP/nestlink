@@ -6,16 +6,32 @@
 local config = {}
 config.filepath = "data/config.txt"
 
-local stringx = require("batteries.stringx")
+local stringx = require("libraries.batteries.stringx")
+local version = "0.1.0"
 
 --[[
 - @brief Initialize a new configuration file.
 --]]
-function config:init()
+function config:initFile()
     if not self:exists() then
         local buffer = love.filesystem.read(self.filepath)
         love.filesystem.write("config.txt", buffer)
     end
+    love.event.quit()
+end
+
+function config:init(appVersion)
+    version = appVersion
+
+    return self
+end
+
+function config:help()
+    local message = love.filesystem.read("data/help.txt")
+    local saveDirectory = love.filesystem.getSaveDirectory()
+
+    print(message:format(version, saveDirectory))
+    love.event.quit()
 end
 
 --[[
@@ -67,6 +83,12 @@ function config:parse(args)
         self.port = data.port
         self.addresses = self:checkIPAddresses(data.addresses)
     else
+        if args[1] == "help" then
+            return self:help()
+        elseif args[1] == "init" then
+            return self:initFile()
+        end
+
         if #args >= 1 then
             if tonumber(args[1]) then
                 self.port = tonumber(args[1])
