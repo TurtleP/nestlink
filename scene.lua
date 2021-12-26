@@ -52,7 +52,7 @@ function scene:load()
     local version_label = label({text = _NESTLINK_VERSION}, fonts.small:getWidth(_NESTLINK_VERSION), fonts.small:getHeight())
     version_label:draw(love.graphics.getWidth() - fonts.small:getWidth(_NESTLINK_VERSION) - 8, (love.graphics.getHeight() - 32) + ((32 - fonts.small:getHeight()) * 0.5) + 1)
 
-    local theme_button = button({alignment = "center", text = "", font = fonts.fontAwesomeRegular, background = {0, 0, 0, 0},
+    local theme_button = button({alignment = "center", text = "", font = fonts.fontAwesomeSolid, background = {0, 0, 0, 0},
         event = function(state)
             local _, toggle = themes:toggle()
 
@@ -71,6 +71,7 @@ end
 
 function scene:update(dt)
     self.scene:update(dt)
+    themes:translateColors(dt)
 end
 
 function scene:draw()

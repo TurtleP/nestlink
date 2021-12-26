@@ -64,6 +64,7 @@ end
 
 function input.sortZ()
 	for i, subs in pairs(input.subscriptions) do
+		print(i, subs)
 		table.sort(subs, sortFunc)
 	end
 end
@@ -171,7 +172,7 @@ function subscription:checkInside(x, y)
 end
 
 function subscription:checkOutside(x, y)
-	return not (x>self.stack.absX and x<self.stack.absX+self.w and y>self.stack.absY and y<self.stack.absY+self.h)
+	return not self:checkInside(x, y)
 end
 
 ---@alias InputMouseClickSubscriptionCallback fun(x:number, y:number, mouseButton:string)
