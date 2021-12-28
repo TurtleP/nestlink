@@ -23,3 +23,7 @@ end
 function love.quit()
     server:close()
 end
+
+function love.wheelmoved(x, y)
+    scene:wheelmoved(x, y)
+end

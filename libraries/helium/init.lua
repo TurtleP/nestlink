@@ -1,13 +1,23 @@
 --[[--------------------------------------------------
 	Helium UI by qfx (qfluxstudios@gmail.com)
 	Copyright (c) 2019 Elmārs Āboliņš
-	gitlab.com/project link here
+	https://github.com/qeffects/helium
 ----------------------------------------------------]]
 local path     = ...
-local helium   = require(path..".dummy")
 
+---@class __HELIUM
+---@field private scene any
+---@field private element any
+---@field private atlas any
+---@field private stack any
+---@field private input any
+local helium   = require(path..'.dummy')
+helium.__index = helium
+
+---@type __HELIUM_CONFIG
 local defaultConf = require(path..".conf")
 helium.conf = {}
+
 if HELIUM_CONFIG then
 	for i, e in pairs(defaultConf) do
 		helium.conf[i] = HELIUM_CONFIG[i] or e
@@ -16,14 +26,28 @@ else
 	helium.conf = defaultConf
 end
 
-helium.utils   = require(path..".utils")
+if helium.conf.LOAD_HOOKS then
+	---@type __HELIUM_HOOKS
+	helium.hooks = require(path..'.hooks')
+end
+
+if helium.conf.LOAD_SHELL then
+	---@type __HELIUM_SHELL
+	helium.shell = require(path..'.shell')
+end
+
+if helium.conf.LOAD_LAYOUT then
+	---@type __HELIUM_LAYOUT
+	helium.layout = require(path..'.layout')
+end
+
+helium.core = require(path..'.core')
+
 helium.scene   = require(path..".core.scene")
 helium.element = require(path..".core.element")
 helium.input   = require(path..".core.input")
-helium.loader  = require(path..".loader")
 helium.stack   = require(path..".core.stack")
 helium.atlas   = require(path..".core.atlas")
-helium.__index = helium
 
 function helium.setBench(time)
 	helium.benchNum = time
@@ -41,6 +65,4 @@ setmetatable(helium, {__call = function(s, chunk)
 	end,})
 end})
 
---Typescript
-helium.helium = helium
 return helium

@@ -1,3 +1,10 @@
+--[[--------------------------------------------------
+	Helium UI by qfx (qfluxstudios@gmail.com)
+	Copyright (c) 2021 Elmārs Āboliņš
+	https://github.com/qeffects/helium
+----------------------------------------------------]]
+local path   = string.sub(..., 1, string.len(...) - string.len(".core.atlas"))
+local helium = require(path..'.dummy')
 local atlas = {}
 atlas.__index = atlas
 ---@class atlases
@@ -33,36 +40,38 @@ end
 function atlases:assign(element)
 	local avg, sum, canvasID = 0, 0, element.context:getCanvasIndex(true) or 1
 
-	for i, e in ipairs(element.renderBench) do
-		sum = sum + e
-	end
+	if not helium.conf.MANUAL_CACHING then
+		for i, e in ipairs(element.renderBench) do
+			sum = sum + e
+		end
 
-	avg = sum/#element.renderBench
+		avg = sum/#element.renderBench
 	
-	local areaBelow = self:getFreeArea(canvasID)
-	local area = element.view.h*element.view.w
+		local areaBelow = self:getFreeArea(canvasID)
+		local area = element.view.h*element.view.w
 
-	local areaCoef = (2-(self:getRatio(canvasID)) )-(area/(areaBelow/(4+3*self:getRatio(canvasID))))
-	local speedCoef = avg/selfRenderTime
+		local areaCoef = (2-(self:getRatio(canvasID)) )-(area/(areaBelow/(4+3*self:getRatio(canvasID))))
+		local speedCoef = avg/selfRenderTime
 	
-	if not ((areaCoef+speedCoef)>coefficient) then
-		return 
+		if not ((areaCoef+speedCoef)>coefficient) then
+			return 
+		end
 	end
 
 	local elW = element.view.w
 	local elH = element.view.h
-	local canvas, quad, interQuad = self.atlases[canvasID]:assignElement(element)
+	local canvas, quad = self.atlases[canvasID]:assignElement(element)
 	if not canvas and self.atlases[canvasID].ideal_area < self.atlases[canvasID].taken_area*4 then
 		--print('refragmenting ;3')
 		self.atlases[canvasID]:refragment()
-		canvas, quad, interQuad = self.atlases[canvasID]:assignElement(element)
+		canvas, quad = self.atlases[canvasID]:assignElement(element)
 		if not canvas then
 			--print('ran out of space')
 		end
 	else
 		--print('wont refragment', createdAtlas.ideal_area, createdAtlas.taken_area)
 	end
-	return canvas, quad, interQuad
+	return canvas, quad, canvasID
 end
 
 function atlases:unassign(element)
@@ -136,12 +145,9 @@ function atlas:assignElement(element)
 		if self.users[element] and self.users[element].quad and self.users[element].interQuad then
 			--update by reference owo
 			self.users[element].quad:setViewport((x-1)*BLOCK_SIZE, (y-1)*BLOCK_SIZE, elW, elH)
-			self.users[element].interQuad:setViewport(0, 0, elW, elH)
 			quad = self.users[element].quad
-			iquad = self.users[element].interQuad
 		else
 			quad = love.graphics.newQuad((x-1)*BLOCK_SIZE, (y-1)*BLOCK_SIZE, elW, elH, self.w, self.h)
-			iquad = love.graphics.newQuad(0, 0, elW, elH, sw, sh)
 		end
 
 		self.users[element] = {
@@ -156,7 +162,7 @@ function atlas:assignElement(element)
 		self:markTiles(x, y, tileSizeX, tileSizeY)
 		self.taken_area = self.taken_area + ((tileSizeY*BLOCK_SIZE)*(tileSizeX*BLOCK_SIZE))
 
-		return self.canvas, self.users[element].quad, iquad
+		return self.canvas, self.users[element].quad
 	else
 		print('failed to allocate :X')
 		return false

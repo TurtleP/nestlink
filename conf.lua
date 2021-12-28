@@ -21,7 +21,7 @@ function love.conf(t)
     t.console = true
     t.identity = "nestlink"
 
-    t.window.width = 480
-    t.window.height = 340
+    t.window.width = 640
+    t.window.height = 480
     t.window.title = "nëstlink"
 end

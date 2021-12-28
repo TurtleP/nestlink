@@ -1,17 +1,23 @@
---Builds the element stack basically
-
+--[[--------------------------------------------------
+	Helium UI by qfx (qfluxstudios@gmail.com)
+	Copyright (c) 2021 Elmārs Āboliņš
+	https://github.com/qeffects/helium
+----------------------------------------------------]]
 local path = string.sub(..., 1, string.len(...) - string.len(".core.stack"))
 local helium = require(path .. ".dummy")
 local event = require(path..'.core.events')
 
 ---@class context
-local context = {}
+---@field element Element
+local context = {
+	type = 'context'
+}
 context.__index = context
 
 local activeContext
 local currentTemporalZ = 0
 
----@param elem element
+---@param elem Element
 function context.new(elem)
     local ctx = setmetatable({
 		capturedChilds = {},
@@ -94,9 +100,20 @@ function context:endSelfRender(time)
 end
 
 function context:destroy()
-    self.elem:undraw()
     for i = 1, #self.childrenContexts do
-        self.childrenContexts[i]:destroy()
+        self.childrenContexts[i].element:destroy()
+    end
+end
+
+function context:undraw()
+    for i = 1, #self.childrenContexts do
+        self.childrenContexts[i].element:undraw()
+    end
+end
+
+function context:redraw()
+    for i = 1, #self.childrenContexts do
+        self.childrenContexts[i].element:redraw()
     end
 end
 
@@ -106,6 +123,9 @@ function context:getCanvasIndex(forCanvas)
 			return self.parentCtx:getCanvasIndex() == 1 and 2 or 1
 		else
 			if forCanvas then
+				if self.element.settings.renderingParentCanvasIndex then
+					return self.element.settings.renderingParentCanvasIndex == 1 and 2 or 1
+				end
 				return self.parentCtx:getCanvasIndex() == 1 and 2 or 1
 			end
 		end
@@ -200,7 +220,19 @@ end
 
 --To be used by the element
 function context:sizeChanged()
+	if self.parentCtx then
+		self.absX      = self.parentCtx.absX + self.view.x
+		self.absY      = self.parentCtx.absY + self.view.y
+	else
+		self.absX      = self.view.x
+		self.absY      = self.view.y
+	end
+
 	self.events:push('resize')
+end
+
+local posPropogator = function(elem)
+	elem:posChanged()
 end
 
 function context:posChanged()
@@ -211,6 +243,8 @@ function context:posChanged()
 		self.absX      = self.view.x
 		self.absY      = self.view.y
 	end
+
+	self:doOnEveryChild(posPropogator)
 
 	self.events:push('poschange')
 end
@@ -232,10 +266,16 @@ function context:offPosChange(callback)
 	self.events:unsub('poschange', callback)
 end
 
-function context:onEveryChild(func)
-	func(self.element)
+function context:doOnEveryChild(func)
 	for i, e in ipairs(self.childrenContexts) do
-		self.childrenContexts:onEveryChild(func)
+		e:onEveryChild(func)
+	end
+end
+
+function context:onEveryChild(func)
+	func(self)
+	for i, e in ipairs(self.childrenContexts) do
+		e:onEveryChild(func)
 	end
 end
 

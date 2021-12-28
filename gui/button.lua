@@ -4,6 +4,8 @@ local state  = require('libraries.helium.hooks.state')
 
 local theme = require("gui.data.themes")
 
+local callback = require("libraries.helium.hooks.callback")
+
 local elementCreator = helium(function(param, view)
     local font = param.font
     local text = param.text
@@ -15,12 +17,22 @@ local elementCreator = helium(function(param, view)
     local current_color = background_color
 
     local event = param.event or function() end
+    local outsideEvent = param.eventOutside or function() end
 
     local limit = view.w
 
     local current_state = state({hovered = false, initialText = text, text = text})
 
+    local enabled = param.enabled ~= nil and false
+    if not param.enabled then
+        enabled = true
+    end
+
     input("hover", function()
+        if not enabled then
+            return
+        end
+
         local colors = theme:colors()
 
         current_state.hovered =  true
@@ -39,6 +51,20 @@ local elementCreator = helium(function(param, view)
             local colors = theme:colors()
             current_color = colors.hover
         end
+    end)
+
+    input("mousepressed_outside", function()
+        if outsideEvent then
+            outsideEvent(current_state)
+        end
+    end)
+
+    callback("setEnabled", function(isEnabled)
+        enabled = isEnabled
+    end)
+
+    callback("background", function(color)
+        background_color = color
     end)
 
     return function()

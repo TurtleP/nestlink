@@ -1,26 +1,26 @@
 local themes = {}
 
-local theme_names   = {"light", "dark"}
-local current_theme = theme_names[1]
-local theme_toggle = false
-
 local colors = require("gui.data.colors")
 
 local tween = require("libraries.tween")
+local mathx = require("libraries.batteries.mathx")
+
 local theme_tween = nil
 
-function themes:set(name)
-    current_theme = name
+local theme_names   = {"light", "dark"}
+local current_theme  = 1
+local current_colors = colors[current_theme]
 
-    return current_theme
+local toggle = true
+
+function themes:set(mode)
+    current_colors = colors[mode]
+    current_theme = mode
 end
 
 function themes:get()
     return current_theme
 end
-
-local current_colors = colors[current_theme]
-local toggle = true
 
 function themes:colors()
     return current_colors
@@ -36,8 +36,7 @@ function themes:translateColors(dt)
 end
 
 function themes:toggle()
-    theme_toggle = not theme_toggle
-    current_theme = theme_names[theme_toggle and 2 or 1]
+    current_theme = mathx.wrap(current_theme + 1, 1, 3)
 
     if not theme_tween then
         theme_tween = tween.new(0.25, current_colors, colors[current_theme], "inQuad")
@@ -45,7 +44,7 @@ function themes:toggle()
         toggle = not toggle
     end
 
-    return current_theme, theme_toggle
+    return current_theme, toggle
 end
 
 return themes

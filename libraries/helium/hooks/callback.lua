@@ -1,5 +1,5 @@
 --Allows to expose a function to outside the element simply
-local path = string.sub(..., 1, string.len(...) - string.len(".hooks.onDestroy"))
+local path = string.sub(..., 1, string.len(...) - string.len(".hooks.callback"))
 local context = require(path.. ".core.stack")
 
 ---Creates a callback on the 'name' field for the current element
@@ -8,9 +8,9 @@ local context = require(path.. ".core.stack")
 return function (name, callback)
 	local activeContext = context.getContext()
 
-	if context.element[name] then
+	if activeContext.element[name] then
 		error('callback with name '..name..' would interfere with internal fields')
 	end
 	
-	context.element[name] = callback
+	activeContext.element[name] = callback
 end

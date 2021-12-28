@@ -1,9 +1,14 @@
---[[ Element superclass ]]
---[[ Love is currently a hard dependency, although not in many places ]]
+--[[--------------------------------------------------
+	Helium UI by qfx (qfluxstudios@gmail.com)
+	Copyright (c) 2021 Elmārs Āboliņš
+	https://github.com/qeffects/helium
+----------------------------------------------------]]
 local path = string.sub(..., 1, string.len(...) - string.len(".core.element"))
 local helium = require(path .. ".dummy")
 local context = require(path.. ".core.stack")
 local scene = require(path.. ".core.scene")
+
+local currentCanvasID
 
 ---@class Element
 local element = {}
@@ -41,6 +46,7 @@ function element:new(param, immediate, w, h, flags)
 		isSetup              = false,
 		pendingUpdate        = true,
 		needsRendering       = true,
+		active               = true,
 		remove               = false,
 		--Unused for now?
 		calculatedDimensions = true,
@@ -52,6 +58,8 @@ function element:new(param, immediate, w, h, flags)
 		immediate            = immediate or false,
 		--Whether this element has a canvas assigned
 		hasCanvas            = false,
+		--Which canvas is it assigned to
+		currentCanvasIndex   = nil,
 		--Current test render passes to be benchmarked
 		testRenderPasses     = 20,
 		--
@@ -121,7 +129,6 @@ function element:posChange(i, v)
 	if not self.deferRepos then
 		self.deferRepos = true
 	end
-
 	
 	if self.callbacks.onPosChange then
 		for i, cb in ipairs(self.callbacks.onPosChange) do
@@ -195,7 +202,7 @@ end
 local newCanvas, newQuad = love.graphics.newCanvas, love.graphics.newQuad
 function element:createCanvas()
 
-	self.canvas, self.quad = scene.activeScene.atlas:assign(self)
+	self.canvas, self.quad, self.settings.currentCanvasIndex = scene.activeScene.atlas:assign(self)
 
 	if not self.canvas then
 		self.settings.failedCanvas = true
@@ -255,13 +262,13 @@ local setColor, rectangle, setFont, printf = love.graphics.setColor, love.graphi
 local calcT
 
 function element:internalRender()
-	if self.settings.testRenderPasses > 0 and selfRenderTime then
+	if self.settings.testRenderPasses > 0 and selfRenderTime and not helium.conf.MANUAL_CACHING then
 		calcT = love.timer.getTime()
 	end
 
 	self.renderer()
 
-	if self.settings.testRenderPasses > 0 and selfRenderTime then
+	if self.settings.testRenderPasses > 0 and selfRenderTime and not helium.conf.MANUAL_CACHING then
 		self.settings.testRenderPasses = self.settings.testRenderPasses-1
 		local selfTime = love.timer.getTime()-calcT
 		table.insert(self.renderBench, selfTime)
@@ -279,14 +286,31 @@ function element:renderWrapper()
 
 	self.context:unset()
 end
+
 local lg = love.graphics
 function element:externalRender()
+	if not self.settings.active then
+		return
+	end
+
 	local cnvs = getCanvas()
 	love.graphics.push('all')
 
 	if not self.settings.isSetup then
 		self:setup()
 		self.settings.isSetup = true
+	end
+
+	local oldCanvasId
+	if self.settings.hasCanvas then
+		if self.settings.currentCanvasIndex == currentCanvasID then
+			--problem lol
+			self.settings.renderingParentCanvasIndex = currentCanvasID
+			self:reassignCanvas()
+		else
+			oldCanvasId = currentCanvasID
+			currentCanvasID = self.settings.currentCanvasIndex
+		end
 	end
 
 	if self.settings.needsRendering then
@@ -326,15 +350,21 @@ function element:externalRender()
 
 	lg.setScissor()
 	love.graphics.pop()
+	currentCanvasID = oldCanvasId
 end
 
 function element:externalUpdate()
+	if not self.settings.active then
+		return
+	end
 	self.context:set()
 	self.context:zIndex()
-	if not self.settings.failedCanvas
+	if ((not self.settings.failedCanvas
 		and self.settings.testRenderPasses == 0
-		and not self.settings.hasCanvas 
-		and scene.activeScene.cached then
+		and scene.activeScene.cached
+		and not helium.conf.MANUAL_CACHING)
+		or self.settings.forcedCanvas)
+		and not self.settings.hasCanvas then
 
 		self:createCanvas()
 
@@ -381,6 +411,10 @@ function element:draw(x, y, w, h)
 	if w then self.view.w = w end
 	if h then self.view.h = h end
 
+	if not self.settings.active then
+		self:redraw()
+	end
+
 	local cx = context.getContext()
 	if cx then
 		if cx:childRender(self) then
@@ -408,10 +442,23 @@ end
 ---Destroys this element
 function element:destroy()
 	self.settings.remove  = true
+	self.settings.inserted  = false
+	self.settings.active  = false
 	self.settings.firstDraw = true
 	self.settings.isSetup = false
 	self:onDestroy()
 	self.context:destroy()
+end
+
+function element:redraw()
+	self.settings.active  = true
+	self.context:redraw()
+end
+
+---Stops rendering, updates and draw
+function element:undraw()
+	self.settings.active  = false
+	self.context:undraw()
 end
 
 return element

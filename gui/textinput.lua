@@ -1,6 +1,7 @@
-local helium  = require("libraries.helium")
-local input   = require('libraries.helium.core.input')
-local state   = require('libraries.helium.hooks.state')
+local helium   = require("libraries.helium")
+local input    = require('libraries.helium.core.input')
+local state    = require('libraries.helium.hooks.state')
+local callback = require("libraries.helium.hooks.callback")
 
 local theme  = require("gui.data.themes")
 local fonts = require("gui.data.fonts")
@@ -13,6 +14,10 @@ local elementCreator = helium(function(param, view)
 
     local is_numeric = param.numeric
     local exceptions = param.exceptions
+
+    local on_focus = param.focused or function() end
+
+    local read_only = param.read_only ~= nil and true or false
 
     local text = ""
 
@@ -38,6 +43,18 @@ local elementCreator = helium(function(param, view)
         end
     end)
 
+    callback("getText", function()
+        return text
+    end)
+
+    callback("setText", function(newText)
+        text = newText
+    end)
+
+    callback("setFocus", function(focus)
+        current_state.focused = focus
+    end)
+
     local text_input = input("textinput", function(value)
         if is_numeric and not tonumber(value) then
             return
@@ -52,6 +69,17 @@ local elementCreator = helium(function(param, view)
         end
     end)
 
+    callback("setReadOnly", function(readOnly)
+        read_only = readOnly
+        if readOnly then
+            key_input:off()
+            text_input:off()
+            return
+        end
+        key_input:on()
+        text_input:on()
+    end)
+
     input("mousepressed_outside", function()
         for _, value in ipairs(bar_tweens) do
             value:reset()
@@ -62,12 +90,22 @@ local elementCreator = helium(function(param, view)
         text_input:off()
     end)
 
-    input("clicked", function()
+    local click = input("clicked", function()
+        if read_only then
+            return
+        end
+
         current_state.focused = true
 
         key_input:on()
         text_input:on()
+
+        on_focus()
     end)
+
+    if read_only then
+        click:off()
+    end
 
     return function()
         local colors = theme:colors()
@@ -82,6 +120,11 @@ local elementCreator = helium(function(param, view)
         if text ~= "" then
             color, display_text = colors.text, text
         end
+
+        if read_only then
+            color = colors.textHint
+        end
+
         love.graphics.setColor(color)
         love.graphics.print(display_text, fonts.small, 4, (view.h - fonts.small:getHeight()) * 0.5)
 

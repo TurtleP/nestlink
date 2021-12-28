@@ -20,6 +20,7 @@ server.port = 8000
 server.allowedAddresses = { "127.0.0.1" }
 
 local __NULL__FUNC__ = function() end
+local log_history = {}
 
 --[[
 - @brief Log a message with the current date and time to the console.
@@ -28,7 +29,44 @@ local __NULL__FUNC__ = function() end
 --]]
 function server:log(format, ...)
     local dateTime = os.date("%m/%d/%Y %H:%M:%S")
-    print("[" .. dateTime .. "] " .. string.format(format, ...))
+    local str = "[" .. dateTime .. "] " .. string.format(format, ...)
+
+    print(str)
+
+    if self:getLogHistory(-1) ~= str then
+        table.insert(log_history, str)
+        onLogHistoryChanged()
+    end
+end
+
+--[[
+- @brief Get the log history
+- @return `table` List of strings of log's history
+]]
+function server:getLogs()
+    return log_history
+end
+
+--[[
+- @brief Returns where the server was initialized
+- @return `boolean` Initialized
+]]
+function server:initialized()
+    return self.inited
+end
+
+function onLogHistoryChanged()
+end
+
+--[[
+- @brief Get the history from the log history table
+- @param `number` Optional index to take from
+]]
+function server:getLogHistory(index)
+    if index == -1 then
+        return log_history[#log_history]
+    end
+    return log_history[index]
 end
 
 --[[
@@ -55,7 +93,7 @@ end
 function server:config(config)
     if config then
         if config.port then
-            self.port = assert:type(config.port, "number")
+            self.port = assert:type(tonumber(config.port), "number")
         end
 
         if config.addresses then
@@ -146,9 +184,7 @@ end
 - @note It is then kept alive until the server has been told that the Client disconnects.
 --]]
 function server:update()
-    if not self.inited then
-        self:init()
-    end
+    assert(self:initialized() == true, "Server not initialized!")
 
     while true do
         local client = self.socket:accept()
@@ -193,7 +229,7 @@ function server:close()
         return
     end
 
-    self.socket:shutdown()
+    self.inited = false
     self.socket:close()
 end
 

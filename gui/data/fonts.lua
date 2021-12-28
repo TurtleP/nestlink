@@ -2,6 +2,7 @@ local fonts = {}
 
 -- GUI Fonts
 fonts.small = love.graphics.newFont("graphics/RobotoRegular.ttf", 16)
+fonts.console = love.graphics.newFont("graphics/CallingCode.ttf", 15)
 
 -- Glyph Fonts
 fonts.fontAwesomeRegular = love.graphics.newFont("graphics/FontAwesomeRegular.otf", 16)

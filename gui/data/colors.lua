@@ -1,6 +1,6 @@
 local hex_colors =
 {
-    ["light"] =
+    [1] =
     {
         menubar = "F3F3F3",
         background = "F9F9F9",
@@ -11,7 +11,7 @@ local hex_colors =
         hover = "E6ECEB"
     },
 
-    ["dark"] =
+    [2] =
     {
         menubar = "202020",
         background = "272727",
@@ -22,7 +22,7 @@ local hex_colors =
         hover = "2B2E2D"
     },
 
-    ["global"] =
+    [3] =
     {
         accentColor = "0069BA"
     }
@@ -46,9 +46,9 @@ local function translate()
         end
     end
 
-    for name, value in pairs(results["global"]) do
+    for name, value in pairs(results[3]) do
         for theme, _ in pairs(results) do
-            if theme ~= "global" then
+            if theme ~= 3 then
                 results[theme][name] = value
             end
         end

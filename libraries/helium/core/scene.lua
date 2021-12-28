@@ -1,3 +1,9 @@
+--[[--------------------------------------------------
+	Helium UI by qfx (qfluxstudios@gmail.com)
+	Copyright (c) 2021 Elmārs Āboliņš
+	https://github.com/qeffects/helium
+----------------------------------------------------]]
+
 local path  = string.sub(..., 1, string.len(...) - string.len(".core.scene"))
 
 local atlas  = require(path..'.core.atlas')
@@ -92,8 +98,8 @@ end
 function scene:drawAtlases(x, y)
 	if self.atlas then
 		local aw = self.atlas.atlases[1].canvas:getWidth()
-		love.graphics.draw(self.atlas.atlases[1].canvas, x, y, 0, 0.5, 0.5)
-		love.graphics.draw(self.atlas.atlases[2].canvas, x+aw/2, y, 0, 0.5, 0.5)
+		love.graphics.draw(self.atlas.atlases[1].canvas, x, y)
+		love.graphics.draw(self.atlas.atlases[2].canvas, x+aw, y)
 	end
 end
 
