@@ -37,8 +37,6 @@ function scene:load()
     host_label:draw(8, 12)
 
     local host_input = combobox({max = 15, exceptions = "([0-9%.])", items = savedata:get("hosts"), height = 24}, 160, 24)
-    host_input:setSize(host_input.view.w, 24 + ((#savedata:get("hosts") + 1) * fonts.small:getHeight()))
-
     host_input:draw(54, 8)
 
     local port_label = label({text = "Port:"}, fonts.small:getWidth("Port:"), fonts.small:getHeight())
@@ -73,7 +71,6 @@ function scene:load()
         event = function(state)
             host_input.addItem(host_input.getText())
             savedata:addValueToField("hosts", host_input.getText(), true)
-            host_input:setSize(host_input.view.w, ((#savedata:get("hosts") + 1) * fonts.small:getHeight()))
         end
     }, 32, 32)
     save_button:draw(4 + connect_button.view.x + connect_button.view.w, 4)
@@ -106,19 +103,30 @@ function scene:load()
 
     onLogHistoryChanged = hook.add(onLogHistoryChanged, function()
         local len = #server:getLogs()
-        local height = scroll_bar.getHeight()
 
-        scroll_bar.updateHeight(height / math.max(len - 23, 1))
-        scroll_bar.updateRange(len)
+        if scroll_bar.getHeight then
+            local height = scroll_bar.getHeight()
+
+            if len > 23 then
+                scroll_bar.updateHeight(height - 23)
+                scroll_bar.updateRange(len)
+            end
+        end
     end)
 
     self.smoothScroll = 0
 end
 
-local scroll_rate = 4
+local scroll_rate = 24
 function scene:update(dt)
     self.scene:update(dt)
     themes:translateColors(dt)
+end
+
+function scene:keypressed(key)
+    if key == "a" then
+        server:log("Random Value: " .. love.math.random())
+    end
 end
 
 function scene:wheelmoved(x, y)
@@ -132,6 +140,7 @@ function scene:draw()
     love.graphics.setColor(1, 1, 1)
 
     self:drawHistory()
+
     self.scene:draw()
 
     if server:initialized() then
@@ -146,24 +155,27 @@ function scene:drawHistory()
     local y = (love.graphics.getHeight() - 32)
     local height = fonts.console:getHeight()
 
-    love.graphics.push()
-
-    if scroll_bar.getValue then
-        love.graphics.translate(0, scroll_bar.getValue() * scroll_bar.view.h)
-    end
-
-    for index = 1, #log_history do
-        local value = log_history[index]
-
+    local row_count = math.floor((y - 42) / fonts.console:getHeight())
+    for row = 1, row_count do
         local highlight = nil
-        if (index % 2) == 0 then
+        if (row % 2) == 0 then
             highlight = colors.hover
         end
 
         if highlight then
             love.graphics.setColor(highlight)
-            love.graphics.rectangle("fill", 0, y - (#log_history - index + 1) * height, love.graphics.getWidth(), height)
+            love.graphics.rectangle("fill", 0, y - (row_count - row + 1) * height, love.graphics.getWidth(), height)
         end
+    end
+
+    love.graphics.push()
+
+    if scroll_bar.getValue then
+        love.graphics.translate(0, (scroll_bar.getValue() * scroll_rate) * (#log_history / 23))
+    end
+
+    for index = 1, #log_history do
+        local value = log_history[index]
 
         love.graphics.setColor(colors.text)
         love.graphics.print(value, fonts.console, 4, y - (#log_history - index + 1) * height)

@@ -2,6 +2,7 @@ local helium = require("libraries.helium")
 local input  = require('libraries.helium.core.input')
 local callback = require("libraries.helium.hooks.callback")
 local state    = require('libraries.helium.hooks.state')
+local size     = require("libraries.helium.hooks.setSize")
 
 local fonts = require("gui.data.fonts")
 local theme = require("gui.data.themes")
@@ -67,7 +68,11 @@ local elementCreator = helium(function(param, view)
 
                     buttons[index] = button(configs[index], view.w, fonts.small:getHeight() + 4)
                 end
+
+                view.h = view.h + ((#items + 1) * fonts.small:getHeight())
+                return
             end
+            view.h = height
         end
     }, 24, 16)
 
@@ -102,19 +107,27 @@ local elementCreator = helium(function(param, view)
 
     local function forceButtonColors(color)
         for index = 1, #buttons do
-            buttons[index].background(color)
+            if buttons[index].background then
+                buttons[index].background(color)
+            end
         end
     end
 
     return function()
+        local colors = theme:colors()
+
         textfield:draw(0, 0)
 
         drop_button:draw(view.w - 28, (height - drop_button.view.h) * 0.5)
+
         if current_state.open then
             for index = 1, #buttons do
                 buttons[index]:draw(0, height + (index - 1) * buttons[index].view.h)
             end
         end
+
+        love.graphics.setColor(1, 1, 1, 0.25)
+        love.graphics.rectangle("fill", 0, 0, view.w, view.h)
     end
 end)
 

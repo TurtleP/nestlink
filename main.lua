@@ -24,6 +24,10 @@ function love.quit()
     server:close()
 end
 
+function love.keypressed(key)
+    scene:keypressed(key)
+end
+
 function love.wheelmoved(x, y)
     scene:wheelmoved(x, y)
 end

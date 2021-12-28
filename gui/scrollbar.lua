@@ -32,7 +32,7 @@ local elementCreator = helium(function(param, view)
         range = limit
 
         if view.h > view.w then
-            yrange = view.h - range
+            yrange = view.h - bar_height
         else
             xrange = range - view.w
         end
@@ -62,7 +62,7 @@ local elementCreator = helium(function(param, view)
         local colors = theme:colors()
 
         love.graphics.setColor(colors.unfocused)
-        love.graphics.rectangle("fill", 0, 2 + (yrange * position), view.w, bar_height - 2)
+        love.graphics.rectangle("fill", 0, 4 + (yrange * position), view.w, bar_height - 8, 2, 2)
     end
 end)
 
