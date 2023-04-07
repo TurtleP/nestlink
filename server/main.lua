@@ -23,5 +23,9 @@ function love.load(args)
         love.event.quit()
     end
 
-    server.accept_connection(parsed.port, parsed.whitelist)
+    server.init(parsed.port, parsed.whitelist)
+end
+
+function love.update(dt)
+    server.accept_connections()
 end

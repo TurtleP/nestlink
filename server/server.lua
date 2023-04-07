@@ -89,7 +89,7 @@ function server.getVersion()
     return server._version
 end
 
-function server.accept_connection(port, whitelist)
+function server.init(port, whitelist)
     assert(not whitelist or #whitelist == 0 or type(whitelist) == "table", "Whitelist is invalid")
     server._whitelist = whitelist
 
@@ -99,15 +99,26 @@ function server.accept_connection(port, whitelist)
     server.socket = socket.tcp()
 
     server.socket:setoption("reuseaddr", true)
-    server.socket:bind("*", port)
-    server.socket:listen()
+    server.socket:settimeout(0)
 
-    server.log("Starting nestlink on *:" .. port)
+    local success, _ = server.socket:bind("localhost", port)
 
-    while true do
-        local client = server.socket:accept()
-        coroutine.wrap(handle_client)(client)
+    if not success then
+        return
     end
+
+    server.socket:listen()
+    server.log("Starting nestlink on *:" .. port)
+end
+
+function server.accept_connections()
+    local client = server.socket:accept()
+
+    if not client then
+        return
+    end
+
+    coroutine.wrap(handle_client)(client)
 end
 
 return server
