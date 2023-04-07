@@ -1,6 +1,8 @@
 {
-  "Lua.diagnostics.globals": ["love"],
-  "Lua.runtime.version": "LuaJIT",
-  "Lua.workspace.library": ["${3rd}/love2d/library"],
-  "Lua.workspace.checkThirdParty": false
+    "Lua.workspace.library": [
+        "${3rd}/love2d/library",
+        "/Users/serenapostelnek/Library/Application Support/Code/User/globalStorage/sumneko.lua/addonManager/addons/luasocket/module/library",
+        "/Users/serenapostelnek/Library/Application Support/Code/User/globalStorage/sumneko.lua/addonManager/addons/argparse/module/library"
+    ],
+    "Lua.workspace.checkThirdParty": false
 }
