@@ -21,7 +21,7 @@ local function split(line, delimiters)
 end
 
 local function check_ip(ip_address)
-    if #server._whitelist or #server._whitelist == 0 then
+    if not server._whitelist or server._whitelist == "*" or #server._whitelist == 0 then
         return true
     end
 
@@ -90,7 +90,7 @@ function server.getVersion()
 end
 
 function server.init(port, whitelist)
-    assert(not whitelist or #whitelist == 0 or type(whitelist) == "table", "Whitelist is invalid")
+    assert(whitelist and (type(whitelist) == "string" or type(whitelist) == "table"), "Whitelist is invalid")
     server._whitelist = whitelist
 
     assert(port and type(port) == "number", "Port is invalid")
