@@ -71,7 +71,7 @@ local function handle_client(client)
 end
 
 function server.log(message, ...)
-    local time = os.date("%c")
+    local time = os.date("%Y-%m-%d %H:%M:%S")
     local log_info = ("[%s]: %s"):format(time, message:format(...))
 
     print(log_info)
