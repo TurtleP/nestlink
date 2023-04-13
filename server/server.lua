@@ -40,13 +40,12 @@ local function handle_client(client)
     client:settimeout(0)
 
     local address, port = client:getsockname()
-    local ip_port = ("%s:%d"):format(address, port)
 
     if not check_ip(address) then
-        server.log(("Got non-whitelisted connection %s"):format(ip_port))
+        server.log("Got non-whitelisted connection %s:%d", address, port)
         return client:close()
     else
-        server.log(("Client connected at %s"):format(ip_port))
+        server.log("Client connected at %s:%d", address, port)
     end
 
     while true do
@@ -99,25 +98,28 @@ function server.init(port, whitelist)
     server.socket = socket.tcp()
 
     server.socket:setoption("reuseaddr", true)
-    server.socket:settimeout(0)
+    server.socket:settimeout(30)
 
-    local success, _ = server.socket:bind("localhost", port)
+    local success, _ = server.socket:bind("0.0.0.0", port)
 
     if not success then
         return
     end
 
-    server.socket:listen()
-    server.log("Starting nestlink on *:" .. port)
+    server.socket:listen(8)
+    server.log("Starting nestlink on %s:%d", server.socket:getsockname())
 end
 
 function server.accept_connections()
+    server.log("accepting client connection")
     local client = server.socket:accept()
 
     if not client then
+        server.log("failed to accept connection")
         return
     end
 
+    server.log("accepted client %s:%d", client:getsockname())
     coroutine.wrap(handle_client)(client)
 end
 

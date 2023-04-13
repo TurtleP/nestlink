@@ -51,16 +51,17 @@ local function inspect(value, visited, path)
 end
 
 function client.connect(host, port)
-    client.socket = socket.tcp()
+    local tcp_socket, _ = socket.tcp()
+    if not tcp_socket then
+        return
+    end
 
-    while not client.socket:connect(host, port) do
-        client.retries = client.retries + 1
-        if client.retries == client.max_retries then
-            print("Failed to connect after 3 attempts")
-            return
-        end
-        print("Connection failed, retrying in 5 seconds...")
-        socket.sleep(5)
+    client.socket = tcp_socket
+    client.socket:settimeout(5)
+
+    local success, _ = client.socket:connect(host, port)
+    if not success then
+        return
     end
 
     client.socket:settimeout(0)
@@ -74,6 +75,15 @@ function client.connect(host, port)
         end
         client.socket:send(table.concat(stringified, client.separator) .. "\n")
     end
+end
+
+function client.disconnect()
+    if not client.socket then
+        return
+    end
+
+    client.socket:shutdown()
+    client.socket:close()
 end
 
 return client
