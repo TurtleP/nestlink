@@ -21,7 +21,7 @@ local function split(line, delimiters)
 end
 
 local function check_ip(ip_address)
-    if not server._whitelist or server._whitelist == "*" or #server._whitelist == 0 then
+    if server._whitelist == "*" or #server._whitelist == 0 then
         return true
     end
 
@@ -39,7 +39,7 @@ end
 local function handle_client(client)
     client:settimeout(0)
 
-    local address, port = client:getsockname()
+    local address, port = client:getpeername()
 
     if not check_ip(address) then
         server.log("Got non-whitelisted connection %s:%d", address, port)
